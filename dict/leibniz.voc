@@ -11,6 +11,8 @@ UencodingRelation
 UconcreteObjects
 UabstractionOperation
 Vabstract
+Vordinary
+Vconcrete
 Vfully-abstract
 Vfully-concrete
 MObject
@@ -18,9 +20,9 @@ MPoint
 MProperty
 MIndividual
 MConcept
-Vconcrete
-Rencodes
-Rexemplifies
+Ris_concrete_at
+Rencodes_at
+Rexemplifies_at
 MProposition
 MWorld
 R=A

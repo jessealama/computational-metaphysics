@@ -32,15 +32,16 @@ begin
 definition
 struct ObjectTheoryModel
   (#
-    objects -> set,
-    points -> non empty set,
+    objects -> non empty set,
+    points -> non empty Subset of the objects,
     propositions -> set,
     properties -> Subset of (the objects)*,
     exemplificationRelation -> Relation of the objects, the properties,
-    encodingRelation -> Relation of the objects, the properties,
+    encodingRelation -> Relation of [:the objects, the points:],
+                                    (the properties \/ the propositions),
     trueAtRelation -> Function of the propositions, the points,
     actualWorld -> Element of the points,
-    concreteObjects -> Subset of the objects,
+    concreteObjects -> Subset of [: the objects, the points :],
     abstractionOperation -> Function of the propositions, the properties
   #);
 end;
@@ -56,115 +57,30 @@ definition
     :DefObjectOf:
     it in the objects of M;
   existence;
+::>       *4
+end;
+
+definition
+  let M be ObjectTheoryModel;
   mode
-    Point of M
+    Point of M -> Object of M
   means
     it in the points of M;
   existence;
+::>       *4
   mode
     Property of M
   means
     :DefProperty:
     it in the properties of M;
   existence;
+::>       *4
   mode
     Proposition of M
   means
     it in the propositions of M;
   existence;
-end;
-
-:: Concrete and abstract objects
-definition
-  let M be ObjectTheoryModel,
-      a be Object of M;
-  attr
-    a is concrete
-  means
-    a in the concreteObjects of M;
-end;
-
-notation
-  let M be ObjectTheoryModel,
-      a be Object of M;
-  antonym a is abstract for a is concrete;
-end;
-
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Properties and propositions
-::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-definition
-  let M be ObjectTheoryModel,
-      p be Proposition of M;
-  func
-    lambda(p) -> Property of M
-  means
-    [p,it] in the abstractionOperation of M;
-  existence;
-  uniqueness;
-end;
-
-definition
-  let M be ObjectTheoryModel;
-  attr
-    M is fully-abstract
-  means
-    :DefFullyAbstract:
-    for x being Object of M holds x is abstract;
-  attr
-    M is fully-concrete
-  means
-    :DefFullyConcrete:
-    for x being Object of M holds x is concrete;
-end;
-
-registration
-  cluster non fully-abstract ObjectTheoryModel;
-  existence;
-end;
-
-registration
-  cluster non fully-concrete ObjectTheoryModel;
-  existence;
-end;
-
-registration
-  let M be non fully-abstract ObjectTheoryModel;
-  cluster concrete Object of M;
-  existence;
-end;
-
-registration
-  let M be non fully-concrete ObjectTheoryModel;
-  cluster abstract Object of M;
-  existence;
-end;
-
-registration
-  let M be non fully-abstract ObjectTheoryModel;
-  cluster concrete Object of M;
-  existence;
-end;
-
-registration
-  let M be non fully-concrete ObjectTheoryModel;
-  cluster abstract Object of M;
-  existence;
-end;
-
-definition
-  let M be ObjectTheoryModel,
-      p be Property of M,
-      a be Object of M;
-  pred
-    a exemplifies p
-  means
-    [a,p] in the exemplificationRelation of M;
-  pred
-    a encodes p
-  means
-    [a,p] in the encodingRelation of M;
+::>       *4
 end;
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -184,13 +100,56 @@ end;
 
 definition
   let M be ObjectTheoryModel,
+      p be Proposition of M,
+      a be Object of M,
+      d be Point of M;
+  pred
+    a exemplifies_at p,d
+  means
+    [[a,d],p] in the exemplificationRelation of M;
+  pred
+    a encodes_at p,d
+  means
+    [[a,d],p] in the encodingRelation of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      p be Property of M,
+      a be Object of M,
+      d be Point of M;
+  pred
+    a exemplifies_at p,d
+  means
+    [[a,d],p] in the exemplificationRelation of M;
+  pred
+    a encodes_at p,d
+  means
+    [[a,d],p] in the encodingRelation of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      p be Proposition of M;
+  func
+    lambda(p) -> Property of M
+  means
+    [p,it] in the abstractionOperation of M;
+  existence;
+::>       *4
+  uniqueness;
+::>        *4
+end;
+
+definition
+  let M be ObjectTheoryModel,
       d be Point of M,
       p be Proposition of M;
   pred
     d validates p
   means
     :DefValidates:
-    d encodes abstract(p);
+    d encodes_at lambda(p),d;
 end;
 
 definition
@@ -201,9 +160,76 @@ definition
     :DefWorld:
     ex d being Point of M st
       for p being Proposition of M holds
-        (it encodes p iff p is_true_at it);
+        (it encodes_at p,d iff p is_true_at it);
   existence;
+::>       *4
 end;
+
+:: Concrete, ordinary and abstract objects
+definition
+  let M be ObjectTheoryModel,
+      a be Object of M,
+      d be Point of M;
+  pred
+    a is_concrete_at d
+  means
+    a in the concreteObjects of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      a be Object of M;
+  attr
+    a is ordinary
+  means
+    :DefOrdinary:
+    ex w being World of M st a is_concrete_at w;
+end;
+    
+
+notation
+  let M be ObjectTheoryModel,
+      a be Object of M;
+  antonym a is abstract for a is ordinary;
+end;
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Properties and propositions
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+definition
+  let M be ObjectTheoryModel;
+  attr
+    M is fully-abstract
+  means
+    :DefFullyAbstract:
+    for x being Object of M holds x is abstract;
+  attr
+    M is fully-concrete
+  means
+    :DefFullyConcrete:
+    for x being Object of M ex d being Point of M st x is_concrete_at d;
+end;
+
+registration
+  cluster non fully-abstract ObjectTheoryModel;
+  existence;
+::>       *4
+end;
+
+registration
+  cluster non fully-concrete ObjectTheoryModel;
+  existence;
+::>       *4
+end;
+
+registration
+  let M be non fully-concrete ObjectTheoryModel;
+  cluster abstract Object of M;
+  existence;
+::>       *4
+end;
+
       
 
 :: Appendix III: The Basic Theorems of World Theory
@@ -234,25 +260,33 @@ end;
 :: Priciple 1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+registration
+  let M be non fully-abstract ObjectTheoryModel;
+  cluster ordinary Object of M;
+  existence;
+::>       *4
+end;
+
 theorem
 for M being non fully-abstract ObjectTheoryModel,
-    a being concrete Object of M,
+    a being ordinary Object of M,
     d being Point of M
-  holds not (ex F being Property of M st a encodes F);
+  holds not (ex F being Property of M st a encodes_at F,d);
+::>                                                      *4
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Principle 2, as a definition
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 definition
-  let M be non fully-abstract ObjectTheoryModel,
-      x, y be concrete Object of M;
+  let M be ObjectTheoryModel,
+      x, y be Object of M;
   pred x =E y
   means :DefConcreteEquality:
-    for N being ObjectTheoryModel,
-        w being World of N,
-        F being Property of N
-      holds ( exemplifies(x, F, N) iff exemplifies(y, F, N) );
+    for w being World of M,
+        F being Property of M
+      holds ( x exemplifies_at F,w iff y exemplifies_at F,w);
+end;
 
 :: Principle 3, as a scheme
 
@@ -261,33 +295,40 @@ definition
 :: replacement, too, wouldn't we?  How do we skirt that issue?
 scheme Principle3 { M() -> non fully-concrete ObjectTheoryModel,
                     P[Property of M()] } :
-  ex x being abstract Object of M() st
-    for F being Property of M() holds (x encodes F iff P[F] )
+    ex x being abstract Object of M() st
+      for w being World of M(), :: is this where the quantifier belongs?
+          F being Property of M() holds (x encodes_at F,w iff P[F])
 proof
   thus thesis;
+::>         *4
 end;
 
 :: Principle 4, as a definition
 definition
-  let M be non fully-concrete ObjectTheoryModel,
-      x, y be abstract Object of M;
-  pred x =a y means
+  let M be ObjectTheoryModel,
+      x, y be Object of M;
+  pred x =A y means
   :DefAbstractEquality:
-  for N being ObjectTheoryModel
-
-theorem
-for M being ObjectTheoryModel,
-    x, y being Element of M
-  holds ((x =E y) iff 
-
-theorem
-for x being Object,
-    M being ObjectTheoryModel holds
-  not ex F being Property st
-    encodes (x, F);
-
-notation
-  synonym x is concept for x is abstract;
+  for w being World of M,
+      F being Property of M
+    holds (x encodes_at F,w iff y encodes_at F,w);
 end;
 
+:: Principle 5, as a definition
+theorem
+for M being ObjectTheoryModel,
+    x, y being Object of M
+  holds x = y iff (x =A y or y =E y);
+::>                                *4,4,4
 
+:: Principle 6, as a scheme
+::
+:: not sure how to represent this
+::
+:: scheme
+::   Principle6 { M() -> ObjectTheoryModel, x,y() -> Object of M() }:
+::     x = y
+::   provided
+::     :: ...
+
+::> 4: This inference is not accepted
