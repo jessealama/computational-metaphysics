@@ -57,7 +57,6 @@ definition
     :DefObjectOf:
     it in the objects of M;
   existence;
-::>       *4
 end;
 
 definition
@@ -65,22 +64,21 @@ definition
   mode
     Point of M -> Object of M
   means
+    :DefPointOf:
     it in the points of M;
   existence;
-::>       *4
   mode
     Property of M
   means
-    :DefProperty:
+    :DefPropertyOf:
     it in the properties of M;
   existence;
-::>       *4
   mode
     Proposition of M
   means
+    :DefPropositionOf:
     it in the propositions of M;
   existence;
-::>       *4
 end;
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -106,10 +104,12 @@ definition
   pred
     a exemplifies_at p,d
   means
+    :DefExemplificationOfProposition:
     [[a,d],p] in the exemplificationRelation of M;
   pred
     a encodes_at p,d
   means
+    :DefEncodingOfProposition:
     [[a,d],p] in the encodingRelation of M;
 end;
 
@@ -121,10 +121,12 @@ definition
   pred
     a exemplifies_at p,d
   means
+    :DefExemplificationOfProperty:
     [[a,d],p] in the exemplificationRelation of M;
   pred
     a encodes_at p,d
   means
+    :DefEncodingOfProperty:
     [[a,d],p] in the encodingRelation of M;
 end;
 
@@ -134,11 +136,10 @@ definition
   func
     lambda(p) -> Property of M
   means
+    :DefLambda:
     [p,it] in the abstractionOperation of M;
   existence;
-::>       *4
   uniqueness;
-::>        *4
 end;
 
 definition
@@ -162,7 +163,6 @@ definition
       for p being Proposition of M holds
         (it encodes_at p,d iff p is_true_at it);
   existence;
-::>       *4
 end;
 
 :: Concrete, ordinary and abstract objects
@@ -173,6 +173,7 @@ definition
   pred
     a is_concrete_at d
   means
+    :DefConcreteAt:
     a in the concreteObjects of M;
 end;
 
@@ -212,25 +213,20 @@ definition
 end;
 
 registration
-  cluster non fully-abstract ObjectTheoryModel;
+  let M be ObjectTheoryModel;
+  cluster abstract for Object of M; :: there is always at least one abstract object
   existence;
-::>       *4
 end;
 
 registration
-  cluster non fully-concrete ObjectTheoryModel;
+  cluster non fully-abstract for ObjectTheoryModel;
   existence;
-::>       *4
 end;
 
 registration
-  let M be non fully-concrete ObjectTheoryModel;
-  cluster abstract Object of M;
+  cluster non fully-concrete for ObjectTheoryModel;
   existence;
-::>       *4
 end;
-
-      
 
 :: Appendix III: The Basic Theorems of World Theory
 
@@ -262,17 +258,15 @@ end;
 
 registration
   let M be non fully-abstract ObjectTheoryModel;
-  cluster ordinary Object of M;
+  cluster ordinary for Object of M;
   existence;
-::>       *4
 end;
 
-theorem
+theorem Principle1:
 for M being non fully-abstract ObjectTheoryModel,
     a being ordinary Object of M,
     d being Point of M
   holds not (ex F being Property of M st a encodes_at F,d);
-::>                                                      *4
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Principle 2, as a definition
@@ -300,7 +294,6 @@ scheme Principle3 { M() -> non fully-concrete ObjectTheoryModel,
           F being Property of M() holds (x encodes_at F,w iff P[F])
 proof
   thus thesis;
-::>         *4
 end;
 
 :: Principle 4, as a definition
@@ -314,12 +307,17 @@ definition
     holds (x encodes_at F,w iff y encodes_at F,w);
 end;
 
-:: Principle 5, as a definition
-theorem
-for M being ObjectTheoryModel,
-    x, y being Object of M
-  holds x = y iff (x =A y or y =E y);
-::>                                *4,4,4
+:: Principle 5
+definition
+  let M be ObjectTheoryModel,
+    x, y being Object of M;
+  redefine pred
+    x = y
+  means
+    :DefObjectEquality:
+    x =A y or y =E y;
+  compatibility;
+end;
 
 :: Principle 6, as a scheme
 ::
@@ -332,12 +330,175 @@ for M being ObjectTheoryModel,
 ::     :: ...
 
 :: Logic of encoding
-theorem
+theorem LogicOfEncoding:
 for M being ObjectTheoryModel,
     x being Object of M,
     F being Property of M
-  st    (ex w  being World of M st    x encodes_at F,w)
+  st    (ex  w being World of M st    x encodes_at F,w)
   holds (for w being World of M holds x encodes_at F,w);
-::>                                                   *4
 
-::> 4: This inference is not accepted
+definition
+  let M be ObjectTheoryModel,
+      a be Object of M,
+      F be Property of M;
+  pred
+    a encodes F
+  means
+    ex w being World of M st a encodes_at F,w;
+end;
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: Theorems
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+definition
+  struct (ObjectTheoryModel) LeibnizConceptModel
+    (# objects -> non empty set,
+       points -> non empty Subset of the objects,
+       propositions -> set,
+       properties -> Subset of (the objects)*,
+       exemplificationRelation -> Relation of the objects, the properties,
+       encodingRelation -> Relation of [:the objects, the points:],
+                                       (the properties \/ the propositions),
+       trueAtRelation -> Function of the propositions, the points,
+       actualWorld -> Element of the points,
+       concreteObjects -> Subset of [: the objects, the points :],
+       abstractionOperation -> Function of the propositions, the properties,
+       entailsRelation -> Relation of the objects, the objects #);
+end;
+
+notation
+  let M be LeibnizConceptModel,
+      x be Object of M;
+  synonym x is concept for x is abstract;
+end;
+
+registration
+  let M be LeibnizConceptModel;
+  cluster abstract for Object of M;
+  existence;
+end;
+
+definition
+  let M be LeibnizConceptModel;
+  mode Concept of M is abstract Object of M;
+  correctness;
+end;
+
+definition
+  let M be LeibnizConceptModel;
+  redefine mode Property of M -> Concept of M;
+  coherence;
+end;
+
+definition
+  let M be LeibnizConceptModel;
+  let c be Concept of M;
+  let d be Concept of M;
+  pred
+    c entails d
+  means
+    :DefEntails:
+    [c,d] in the entailsRelation of M;
+end;
+
+reserve M for LeibnizConceptModel,
+        x, y, z for Object of M,
+        F, G, H for Property of M;
+
+theorem Theorem1:
+x = x; :: proof is obvious
+
+theorem Theorem2:
+x = y implies y = x;
+
+theorem Theorem3:
+(x = y & y = z) implies x = z;
+
+:: The concept-of operator
+definition
+  let M be LeibnizConceptModel;
+  let G be Property of M;
+  func
+    concept_of(G) -> Concept of M
+  means
+    :DefConceptOf:
+    for F being Property of M holds (it encodes F iff G entails F);
+  existence;
+  uniqueness;
+end;
+
+:: Concept sum
+definition
+  let M be LeibnizConceptModel,
+      x, y be Concept of M;
+  func
+    x + y -> Concept of M
+  means
+    :DefConceptSum:
+    for F being Property of M
+     holds it encodes F iff (x encodes F or y encodes F);
+  existence;
+  uniqueness;
+end;
+
+theorem Theorem4Part1:
+concept_of(G) + concept_of(H) is Concept of M; :: obvious
+
+theorem Theorem4Part2:
+(concept_of(G) + concept_of(H)) encodes F implies (G entails F or H entails F)
+proof
+  set cG = concept_of(G);
+  set cH = concept_of(H);
+  set S = cG + cH;
+  thus S encodes F implies (G entails F or H entails F)
+  proof
+    assume A1: S encodes F;
+    then for F being Property of M
+      holds S encodes F iff (cG encodes F or cH encodes F) by DefConceptSum;
+    then S encodes F iff (cG encodes F or cH encodes F);
+    then cG encodes F or cH encodes F by A1;
+    then per cases;
+    suppose cG encodes F;
+      then G entails F by DefConceptOf;
+      hence thesis;
+    end;
+    suppose cH encodes F;
+      then H entails F by DefConceptOf;
+      hence thesis;
+    end;
+  end;
+end;
+
+theorem Theorem4Part3:
+(G entails F or H entails F) implies (concept_of(G) + concept_of(H)) encodes F
+proof
+  set cG = concept_of(G);
+  set cH = concept_of(H);
+  assume A1: G entails F or H entails F;
+  then per cases;
+  suppose G entails F;
+    then cG encodes F by DefConceptOf;
+    hence thesis by DefConceptSum;
+  end;
+  suppose H entails F;
+    then cH encodes F by DefConceptOf;
+    hence thesis by DefConceptSum;
+  end;
+end;
+
+theorem Theorem4Part4:
+(concept_of(G) + concept_of(H)) encodes F iff (G entails F or H entails F)
+  by Theorem4Part2,Theorem4Part3;
+
+
+theorem Theorem4Part3:
+(for F being Property of M holds (x encodes F iff (G entails F or H entails F)))
+  implies (x = concept_of(G) + concept_of(H))
+proof
+  assume A1: for F being Property of M
+               holds (x encodes F iff G entails F or H entails F);
+  
+
+        
+
