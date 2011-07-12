@@ -1,4 +1,5 @@
 GObjectTheoryModel
+GLeibnizConceptModel
 Uobjects
 Upoints
 Uproperties
@@ -10,9 +11,11 @@ UexemplificationRelation
 UencodingRelation
 UconcreteObjects
 UabstractionOperation
+UentailsRelation
 Vabstract
 Vordinary
 Vconcrete
+Vconcept
 Vfully-abstract
 Vfully-concrete
 MObject
@@ -22,6 +25,7 @@ MIndividual
 MConcept
 Ris_concrete_at
 Rencodes_at
+Rencodes
 Rexemplifies_at
 MProposition
 MWorld
@@ -30,3 +34,5 @@ R=E
 Ris_true_at
 Rvalidates
 Olambda
+Oconcept_of
+Rentails
