@@ -331,4 +331,13 @@ for M being ObjectTheoryModel,
 ::   provided
 ::     :: ...
 
+:: Logic of encoding
+theorem
+for M being ObjectTheoryModel,
+    x being Object of M,
+    F being Property of M
+  st    (ex w  being World of M st    x encodes_at F,w)
+  holds (for w being World of M holds x encodes_at F,w);
+::>                                                   *4
+
 ::> 4: This inference is not accepted
