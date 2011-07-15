@@ -12,6 +12,9 @@ UencodingRelation
 UconcreteObjects
 UabstractionOperation
 UentailsRelation
+UdistinguishedPoint
+UVAC
+UPLUG
 Vabstract
 Vordinary
 Vconcrete
@@ -20,6 +23,8 @@ Vfully-abstract
 Vfully-concrete
 MObject
 MPoint
+V-point
+Ow_alpha
 MProperty
 MIndividual
 MConcept
@@ -36,3 +41,7 @@ Rvalidates
 Olambda
 Oconcept_of
 Rentails
+Rare_equal_at
+Ris_equal_to
+Ris_a_vacuous_expansion_of
+MSituation
