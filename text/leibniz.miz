@@ -2,7 +2,7 @@ environ
 
  vocabularies SUBSET_1, NUMBERS, XBOOLE_0, FUNCOP_1, FUNCT_2, RELAT_1, TARSKI,
       FINSEQ_1, CARD_3, FUNCT_1, ZFMISC_1, ORDINAL4, CARD_1, XBOOLEAN,
-      MARGREL1, PARTFUN1, NAT_1, UNIALG_1, FINSEQ_2, UNIALG_2, LEIBNIZ, ARYTM_3;
+      MARGREL1, PARTFUN1, NAT_1, UNIALG_1, FINSEQ_2, UNIALG_2, LEIBNIZ, ARYTM_3, XXREAL_0, ZF_MODEL;
  notations TARSKI, XBOOLE_0, ZFMISC_1, SUBSET_1, NUMBERS, FUNCT_1, RELAT_1,
       NAT_1, RELSET_1, FUNCT_2, XBOOLEAN, MARGREL1, CARD_3, FINSEQ_1, FINSEQ_2, FUNCOP_1, PARTFUN1;
  constructors FUNCOP_1, XCMPLX_0, FINSEQ_1, XBOOLEAN, RELSET_1, CARD_3,
@@ -33,18 +33,23 @@ definition
 struct ObjectTheoryModel
   (#
     objects -> non empty set,
-    points -> non empty Subset of the objects,
-    propositions -> set,
-    properties -> Subset of (the objects)*,
-    exemplificationRelation -> Relation of the objects, the properties,
-    encodingRelation -> Relation of [:the objects, the points:],
-                                    (the properties \/ the propositions),
+    points -> non empty set,
+    propositions -> non empty set,
+    properties -> non empty set,
+    exemplificationRelation -> Relation of [: the properties, the objects :],
+                                            the points,
+    encodingRelation -> Relation of [:the objects, the properties:],
+                                     the points,
     trueAtRelation -> Function of the propositions, the points,
-    actualWorld -> Element of the points,
+    distinguishedPoint -> Element of the points,
     concreteObjects -> Subset of [: the objects, the points :],
-    abstractionOperation -> Function of the propositions, the properties
+    VAC -> Relation of the propositions, the properties, :: might be a relation
+    PLUG -> Relation of the properties, the objects
+    :: might need plug, too; could call the VAC
   #);
 end;
+
+:: add additional dimensions/arities
 
 :: Convenient types coming from the slots of ObjectTheoryModel
 :: structures
@@ -93,24 +98,7 @@ definition
     p is_true_at d
   means
     :DefTrueAt:
-    [d,p] in the trueAtRelation of M;
-end;
-
-definition
-  let M be ObjectTheoryModel,
-      p be Proposition of M,
-      a be Object of M,
-      d be Point of M;
-  pred
-    a exemplifies_at p,d
-  means
-    :DefExemplificationOfProposition:
-    [[a,d],p] in the exemplificationRelation of M;
-  pred
-    a encodes_at p,d
-  means
-    :DefEncodingOfProposition:
-    [[a,d],p] in the encodingRelation of M;
+    [p,d] in the trueAtRelation of M;
 end;
 
 definition
@@ -132,37 +120,13 @@ end;
 
 definition
   let M be ObjectTheoryModel,
-      p be Proposition of M;
-  func
-    lambda(p) -> Property of M
-  means
-    :DefLambda:
-    [p,it] in the abstractionOperation of M;
-  existence;
-  uniqueness;
-end;
-
-definition
-  let M be ObjectTheoryModel,
-      d be Point of M,
+      P be Property of M,
       p be Proposition of M;
   pred
-    d validates p
+    P is_a_vacuous_expansion_of p
   means
-    :DefValidates:
-    d encodes_at lambda(p),d;
-end;
-
-definition
-  let M be ObjectTheoryModel;
-  mode
-    World of M -> Point of M
-  means
-    :DefWorld:
-    ex d being Point of M st
-      for p being Proposition of M holds
-        (it encodes_at p,d iff p is_true_at it);
-  existence;
+    :DefIsAVacuousExpansionOf:
+    [P,p] in the VAC of M;
 end;
 
 :: Concrete, ordinary and abstract objects
@@ -184,14 +148,54 @@ definition
     a is ordinary
   means
     :DefOrdinary:
-    ex w being World of M st a is_concrete_at w;
+    ex d being Point of M st a is_concrete_at d;
 end;
-    
 
 notation
   let M be ObjectTheoryModel,
       a be Object of M;
   antonym a is abstract for a is ordinary;
+end;
+
+:: def of situation
+
+definition
+  let M be ObjectTheoryModel;
+  mode
+    Situation of M -> Object of M
+  means
+    :DefSituation:
+    for d being Point of M holds
+      (it is abstract
+       &
+      (for P being Property of M
+         holds (it encodes_at P,d
+                implies
+                ex p being Proposition of M st P is_a_vacuous_expansion_of p)));
+  existence;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      s be Situation of M,
+      p be Proposition of M;
+  pred
+    s |= p
+  means
+    for d being Point of M
+      ex P being Property of M st (P is_a_vacuous_expansion_of p & s encodes_at P,d);
+end;
+
+definition
+  let M be ObjectTheoryModel;
+  mode
+    World of M -> Situation of M
+  means
+    :DefWorld:
+    ex d being Point of M st
+      for p being Proposition of M holds
+        (it |= p iff p is_true_at d);
+  existence;
 end;
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -277,9 +281,9 @@ definition
       x, y be Object of M;
   pred x =E y
   means :DefConcreteEquality:
-    for w being World of M,
+    for d being Point of M,
         F being Property of M
-      holds ( x exemplifies_at F,w iff y exemplifies_at F,w);
+      holds ( x exemplifies_at F,d iff y exemplifies_at F,d);
 end;
 
 :: Principle 3, as a scheme
@@ -290,8 +294,8 @@ end;
 scheme Principle3 { M() -> non fully-concrete ObjectTheoryModel,
                     P[Property of M()] } :
     ex x being abstract Object of M() st
-      for w being World of M(), :: is this where the quantifier belongs?
-          F being Property of M() holds (x encodes_at F,w iff P[F])
+      for d being Point of M(), :: is this where the quantifier belongs?
+          F being Property of M() holds (x encodes_at F,d iff P[F])
 proof
   thus thesis;
 end;
@@ -302,40 +306,54 @@ definition
       x, y be Object of M;
   pred x =A y means
   :DefAbstractEquality:
-  for w being World of M,
+  for d being Point of M,
       F being Property of M
-    holds (x encodes_at F,w iff y encodes_at F,w);
+    holds (x encodes_at F,d iff y encodes_at F,d);
+  reflexivity; :: obvious
+  symmetry; :: also obvious
 end;
 
 :: Principle 5
 definition
   let M be ObjectTheoryModel,
-    x, y being Object of M;
-  redefine pred
-    x = y
+      d be Point of M,
+      x, y being Object of M;
+  pred
+    x,y are_equal d
   means
-    :DefObjectEquality:
-    x =A y or y =E y;
-  compatibility;
+    :DefAreEqualAt:
+    x =A y or x =E y;
+end;
+
+definition
+  let M be ObjectTheoryModel;
+  func
+    w_alpha(M) -> Point of M
+  equals
+    the distinguishedPoint of M;
+  coherence;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      x, y be Object of M;
+  pred
+    x is_equal_to y
+  means
+   :DefIsEqualTo:
+    x,y are_equal_at w_alpha(M);
 end;
 
 :: Principle 6, as a scheme
-::
-:: not sure how to represent this
-::
-:: scheme
-::   Principle6 { M() -> ObjectTheoryModel, x,y() -> Object of M() }:
-::     x = y
-::   provided
-::     :: ...
 
-:: Logic of encoding
-theorem LogicOfEncoding:
-for M being ObjectTheoryModel,
-    x being Object of M,
-    F being Property of M
-  st    (ex  w being World of M st    x encodes_at F,w)
-  holds (for w being World of M holds x encodes_at F,w);
+definition
+  let M be ObjectTheoryModel,
+      a be set;
+  attr
+    a is M-point
+  means
+    a in the points of M;
+end;
 
 definition
   let M be ObjectTheoryModel,
@@ -344,27 +362,46 @@ definition
   pred
     a encodes F
   means
-    ex w being World of M st a encodes_at F,w;
+    a encodes_at F, w_alpha(M);
 end;
 
+scheme
+Principle6 { M() -> ObjectTheoryModel, x,y() -> Object of M() }:
+  x() = y()
+provided
+  for F being Property of M() holds (x() encodes F iff y() encodes F)
+proof
+  thus thesis;
+end;
+
+:: Logic of encoding
+theorem LogicOfEncoding:
+for M being ObjectTheoryModel,
+    x being Object of M,
+    F being Property of M
+  st    (ex  d being Point of M st    x encodes_at F,d)
+  holds (for d being Point of M holds x encodes_at F,d);
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::: Theorems
+::: Leibniz concept models
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 definition
   struct (ObjectTheoryModel) LeibnizConceptModel
-    (# objects -> non empty set,
-       points -> non empty Subset of the objects,
-       propositions -> set,
-       properties -> Subset of (the objects)*,
-       exemplificationRelation -> Relation of the objects, the properties,
-       encodingRelation -> Relation of [:the objects, the points:],
-                                       (the properties \/ the propositions),
-       trueAtRelation -> Function of the propositions, the points,
-       actualWorld -> Element of the points,
-       concreteObjects -> Subset of [: the objects, the points :],
-       abstractionOperation -> Function of the propositions, the properties,
-       entailsRelation -> Relation of the objects, the objects #);
+  (# objects -> non empty set,
+     points -> non empty set,
+     propositions -> non empty set,
+     properties -> non empty set,
+     exemplificationRelation -> Relation of [: the properties, the objects :],
+                                            the points,
+    encodingRelation -> Relation of [:the objects, the properties:],
+                                     the points,
+    trueAtRelation -> Function of the propositions, the points,
+    distinguishedPoint -> Element of the points,
+    concreteObjects -> Subset of [: the objects, the points :],
+    VAC -> Relation of the propositions, the properties, :: might be a relation
+    PLUG -> Relation of the properties, the objects,
+    entailsRelation -> Relation of the objects, the objects #);
 end;
 
 notation
@@ -391,6 +428,8 @@ definition
   coherence;
 end;
 
+:: strong material conditional in terms of exemplification formula
+
 definition
   let M be LeibnizConceptModel;
   let c be Concept of M;
@@ -403,17 +442,51 @@ definition
 end;
 
 reserve M for LeibnizConceptModel,
-        x, y, z for Object of M,
+        x, y, z, u for Concept of M,
         F, G, H for Property of M;
 
-theorem Theorem1:
-x = x; :: proof is obvious
+theorem Theorem1Modal:
+for d being Point of M holds x,x are_equal_at d
+proof
+  let d be Point of M;
+  per cases;
+  suppose A1: x is abstract;
+    then x =A x;
+    hence thesis by DefAreEqualAt;
+  end;
+  suppose A2: x is ordinary;
+    hence thesis;
+  end;
+end;
 
-theorem Theorem2:
-x = y implies y = x;
+theorem Theorem1Distinguished:
+x is_equal_to x
+proof
+  x,x are_equal_at w_alpha(M) by Theorem1Modal;
+  hence thesis by DefIsEqualTo;
+end;
+
+theorem Theorem2Modal:
+for d being Point of M st x,y are_equal_at d holds y,x are_equal_at d
+proof
+  let d be Point of M such that A1: x,y are_equal_at d;
+   per cases by
+   suppose C1: x =A y;
+     hence thesis;
+   end;
+   suppose C2: y =E y;
+
+theorem Theorem2Distinguished:
+x is_equal_to y implies y is_equal_to x
+proof
+  assume x is_equal_to y;
+  then x,y are_equal_at w_alpha(M) by DefIsEqualTo;
+  then y,x are_equal_at w_alpha(M) by Theorem2Modal;
+  hence thesis by DefIsEqualTo;
+end;
 
 theorem Theorem3:
-(x = y & y = z) implies x = z;
+(x is_equal_to y & y is_equal_to z) implies x is_equal_to z;
 
 :: The concept-of operator
 definition
@@ -492,13 +565,93 @@ theorem Theorem4Part4:
   by Theorem4Part2,Theorem4Part3;
 
 
-theorem Theorem4Part3:
+theorem Theorem4Part5:
 (for F being Property of M holds (x encodes F iff (G entails F or H entails F)))
   implies (x = concept_of(G) + concept_of(H))
 proof
+  set cG = concept_of(G);
+  set cH = concept_of(H);
+  set S = cG + cH;
   assume A1: for F being Property of M
                holds (x encodes F iff G entails F or H entails F);
-  
+  A2: for F being Property of M holds (x encodes F iff S encodes F)
+  proof
+    let F be Property of M;
+    B1: x encodes F iff (G entails F or H entails F) by A1;
+    S encodes F iff (G entails F or H entails F) by Theorem4Part4;
+    hence thesis by B1;
+  end;
+  thus thesis from Principle6(A2);
+end;
 
-        
+theorem Theorem5:
+x + x = x;
+
+theorem Theorem6:
+x + y = y + x;
+
+theorem Theorem7:
+x + (y + z) = (x + y) + z;
+
+:: Theorem 8 is a scheme.  One could represent this, by treating + as
+:: an operation that takes finite sequences of concepts as arguments,
+:: but in the interst of getting on to more interesting stuff, let's
+:: skip it.
+
+            theorem Theorem9:
+x = y implies for z holds (x + z = y + z); :: obvious
+
+theorem Theorem10:
+x = y & z = u implies x + z = y + u; :: obvious
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: Concept inclusion and containment
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+definition
+  let M be LeibnizConceptModel,
+      x, y be Concept of M;
+  pred
+    x <= y
+  means
+    :DefConceptInclusion:
+    for F being Property of M holds (x encodes F implies y encodes F);
+  reflexivity; :: Theorem 11i
+end;
+
+notation
+  let M be LeibnizConceptModel,
+      x, y be Concept of M;
+  synonym y >= x for x <= y;
+end;
+
+theorem Theorem11i:
+x <= x; :: restatement of reflexivity of <=
+
+theorem Theorem11c:
+x >= x; :: obvious, in light of the reflexivity of <= and the definition of >=
+
+theorem Theorem12i:
+x <= y implies (x <> y implies not (y <= x));
+
+theorem Theorem12c:
+x >= y implies (x <> y implies not (y >= x)) by Theorem12i;
+
+theorem Theorem13i:
+x <= y & y <= z implies x <= z;
+
+theorem Theorem13c:
+x >= y & y >= z implies x >= z;
+
+theorem Theorem14i:
+x <= y & y <= x implies x = y;
+
+theorem Theorem14c:
+x >= y & y >= x implies x = y by Theorem14i;
+
+theorem Theorem15i:
+(for z holds (z <= x iff z <= y)) implies x = y;
+
+theorem Theorem15c:
+(for z holds (z >= x iff z >= y)) implies x = y;
 
