@@ -1,0 +1,380 @@
+environ
+
+ vocabularies SUBSET_1, NUMBERS, XBOOLE_0, FUNCOP_1, FUNCT_2, RELAT_1, TARSKI,
+      FINSEQ_1, CARD_3, FUNCT_1, ZFMISC_1, ORDINAL4, CARD_1, XBOOLEAN,
+      MARGREL1, PARTFUN1, NAT_1, UNIALG_1, FINSEQ_2, UNIALG_2, LEIBNIZ, ARYTM_3, XXREAL_0, ZF_MODEL;
+ notations TARSKI, XBOOLE_0, ZFMISC_1, SUBSET_1, NUMBERS, FUNCT_1, RELAT_1,
+      NAT_1, RELSET_1, FUNCT_2, XBOOLEAN, MARGREL1, CARD_3, FINSEQ_1, FINSEQ_2, FUNCOP_1, PARTFUN1;
+ constructors FUNCOP_1, XCMPLX_0, FINSEQ_1, XBOOLEAN, RELSET_1, CARD_3,
+      FINSEQ_2, MARGREL1;
+ registrations XBOOLE_0, SUBSET_1, RELAT_1, FUNCT_1, XBOOLEAN, FINSEQ_1,
+      FINSEQ_2, ORDINAL1, RELSET_1, PARTFUN1, FUNCOP_1, XXREAL_0, CARD_1,
+      CARD_3, MARGREL1;
+ requirements SUBSET, BOOLE, ARITHM;
+ definitions TARSKI, XBOOLE_0, XBOOLEAN, FINSEQ_1, CARD_3, FUNCT_1, FUNCOP_1, MARGREL1;
+ theorems TARSKI, ZFMISC_1, FINSEQ_1, FUNCT_2, FUNCOP_1, XBOOLE_0, XBOOLE_1,
+      XBOOLEAN, FUNCT_1, CARD_3, FINSEQ_3, RELAT_1, RELSET_1, PARTFUN1,
+      ORDINAL1, FINSEQ_2, MARGREL1;
+ schemes XBOOLE_0, FUNCT_1;
+
+
+begin
+
+:: Object theory models consist of 7 pieces of data:
+::
+:: * A non-empty set of objects;
+:: * A non-empty set of points;
+:: * A set of properties, which are relations on the objects;
+:: * An exemplification relation holding between objects and properties;
+:: * An encoding relation, holding between objects and properties;
+:: * A distinguished subset of objects (the concrete ones).
+
+definition
+struct ObjectTheoryModel
+  (#
+    objects -> non empty set,
+    points -> non empty set,
+    propositions -> non empty set,
+    properties -> non empty set,
+    exemplificationRelation -> Relation of [: the properties, the objects :],
+                                            the points,
+    encodingRelation -> Relation of [:the objects, the properties:],
+                                     the points,
+    trueAtRelation -> Function of the propositions, the points,
+    distinguishedPoint -> Element of the points,
+    concreteObjects -> Subset of [: the objects, the points :],
+    VAC -> Relation of the propositions, the properties, :: might be a relation
+    PLUG -> Relation of the properties, the objects
+    :: might need plug, too; could call the VAC
+  #);
+end;
+
+:: add additional dimensions/arities
+
+:: Convenient types coming from the slots of ObjectTheoryModel
+:: structures
+
+definition
+  let M be ObjectTheoryModel;
+  mode
+    Object of M
+  means
+    :DefObjectOf:
+    it in the objects of M;
+  existence;
+end;
+
+definition
+  let M be ObjectTheoryModel;
+  mode
+    Point of M -> Object of M
+  means
+    :DefPointOf:
+    it in the points of M;
+  existence;
+  mode
+    Property of M
+  means
+    :DefPropertyOf:
+    it in the properties of M;
+  existence;
+  mode
+    Proposition of M
+  means
+    :DefPropositionOf:
+    it in the propositions of M;
+  existence;
+end;
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Worlds
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+definition
+  let M be ObjectTheoryModel,
+      d be Point of M,
+      p be Proposition of M;
+  pred
+    p is_true_at d
+  means
+    :DefTrueAt:
+    [p,d] in the trueAtRelation of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      p be Property of M,
+      a be Object of M,
+      d be Point of M;
+  pred
+    a exemplifies_at p,d
+  means
+    :DefExemplificationOfProperty:
+    [[a,d],p] in the exemplificationRelation of M;
+  pred
+    a encodes_at p,d
+  means
+    :DefEncodingOfProperty:
+    [[a,d],p] in the encodingRelation of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      P be Property of M,
+      p be Proposition of M;
+  pred
+    P is_a_vacuous_expansion_of p
+  means
+    :DefIsAVacuousExpansionOf:
+    [P,p] in the VAC of M;
+end;
+
+:: Concrete, ordinary and abstract objects
+definition
+  let M be ObjectTheoryModel,
+      a be Object of M,
+      d be Point of M;
+  pred
+    a is_concrete_at d
+  means
+    :DefConcreteAt:
+    a in the concreteObjects of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      a be Object of M;
+  attr
+    a is ordinary
+  means
+    :DefOrdinary:
+    ex d being Point of M st a is_concrete_at d;
+end;
+
+notation
+  let M be ObjectTheoryModel,
+      a be Object of M;
+  antonym a is abstract for a is ordinary;
+end;
+
+:: def of situation
+
+definition
+  let M be ObjectTheoryModel;
+  mode
+    Situation of M -> Object of M
+  means
+    :DefSituation:
+    for d being Point of M holds
+      (it is abstract
+       &
+      (for P being Property of M
+         holds (it encodes_at P,d
+                implies
+                ex p being Proposition of M st P is_a_vacuous_expansion_of p)));
+  existence;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      s be Situation of M,
+      p be Proposition of M;
+  pred
+    s |= p
+  means
+    for d being Point of M
+      ex P being Property of M st (P is_a_vacuous_expansion_of p & s encodes_at P,d);
+end;
+
+definition
+  let M be ObjectTheoryModel;
+  mode
+    World of M -> Situation of M
+  means
+    :DefWorld:
+    ex d being Point of M st
+      for p being Proposition of M holds
+        (it |= p iff p is_true_at d);
+  existence;
+end;
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Properties and propositions
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+definition
+  let M be ObjectTheoryModel;
+  attr
+    M is fully-abstract
+  means
+    :DefFullyAbstract:
+    for x being Object of M holds x is abstract;
+  attr
+    M is fully-concrete
+  means
+    :DefFullyConcrete:
+    for x being Object of M ex d being Point of M st x is_concrete_at d;
+end;
+
+registration
+  let M be ObjectTheoryModel;
+  cluster abstract for Object of M; :: there is always at least one abstract object
+  existence;
+end;
+
+registration
+  cluster non fully-abstract for ObjectTheoryModel;
+  existence;
+end;
+
+registration
+  cluster non fully-concrete for ObjectTheoryModel;
+  existence;
+end;
+
+:: Appendix III: The Basic Theorems of World Theory
+
+:: Definition of the makes-true relation
+
+:: 1. There is a unique actual world
+
+:: 2. Every world is maximal
+
+:: 3. Every world is possible
+
+:: 4. Every world is modally closed
+
+:: 5. A proposition is necessarily true iff it is true at all possible
+::    worlds
+
+:: 6. A proposition is possible iff there is a world where it is true
+
+:: 7. For any object x: a proposition p is true at world w if and only
+:: if at w, x exemplifies being such that p
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Priciple 1
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+registration
+  let M be non fully-abstract ObjectTheoryModel;
+  cluster ordinary for Object of M;
+  existence;
+end;
+
+theorem Principle1:
+for M being non fully-abstract ObjectTheoryModel,
+    a being ordinary Object of M,
+    d being Point of M
+  holds not (ex F being Property of M st a encodes_at F,d);
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Principle 2, as a definition
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+definition
+  let M be ObjectTheoryModel,
+      x, y be Object of M;
+  pred x =E y
+  means :DefConcreteEquality:
+    for d being Point of M,
+        F being Property of M
+      holds ( x exemplifies_at F,d iff y exemplifies_at F,d);
+end;
+
+:: Principle 3, as a scheme
+
+:: We'll probably run into trouble with the absence of a contraint on
+:: free variables.  But then again, we'd run into a trouble with
+:: replacement, too, wouldn't we?  How do we skirt that issue?
+scheme Principle3 { M() -> non fully-concrete ObjectTheoryModel,
+                    P[Property of M()] } :
+    ex x being abstract Object of M() st
+      for d being Point of M(), :: is this where the quantifier belongs?
+          F being Property of M() holds (x encodes_at F,d iff P[F])
+proof
+  thus thesis;
+end;
+
+:: Principle 4, as a definition
+definition
+  let M be ObjectTheoryModel,
+      x, y be Object of M;
+  pred x =A y means
+  :DefAbstractEquality:
+  for d being Point of M,
+      F being Property of M
+    holds (x encodes_at F,d iff y encodes_at F,d);
+  reflexivity; :: obvious
+  symmetry; :: also obvious
+end;
+
+:: Principle 5
+definition
+  let M be ObjectTheoryModel,
+      d be Point of M,
+      x, y being Object of M;
+  pred
+    x,y are_equal d
+  means
+    :DefAreEqualAt:
+    x =A y or x =E y;
+end;
+
+definition
+  let M be ObjectTheoryModel;
+  func
+    w_alpha(M) -> Point of M
+  equals
+    the distinguishedPoint of M;
+  coherence;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      x, y be Object of M;
+  pred
+    x is_equal_to y
+  means
+   :DefIsEqualTo:
+    x,y are_equal_at w_alpha(M);
+end;
+
+:: Principle 6, as a scheme
+
+definition
+  let M be ObjectTheoryModel,
+      a be set;
+  attr
+    a is M-point
+  means
+    a in the points of M;
+end;
+
+definition
+  let M be ObjectTheoryModel,
+      a be Object of M,
+      F be Property of M;
+  pred
+    a encodes F
+  means
+    a encodes_at F, w_alpha(M);
+end;
+
+scheme
+Principle6 { M() -> ObjectTheoryModel, x,y() -> Object of M() }:
+  x() = y()
+provided
+  for F being Property of M() holds (x() encodes F iff y() encodes F)
+proof
+  thus thesis;
+end;
+
+:: Logic of encoding
+theorem LogicOfEncoding:
+for M being ObjectTheoryModel,
+    x being Object of M,
+    F being Property of M
+  st    (ex  d being Point of M st    x encodes_at F,d)
+  holds (for d being Point of M holds x encodes_at F,d);
+
